@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f7c86">
+<title>Холодильник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@600&display=swap">
+<style>
+html { padding-top: env(safe-area-inset-top, 0px); }
+body { margin: 0; }
+/* Одна колонка для телефона: сверху «что пора съесть», ниже весь список по разделам, внизу кнопка «Положила продукт». */
+:root {
+  --bg: #f1f6f7;
+  --card: #ffffff;
+  --fg: #17282c;
+  --muted: #5b7076;
+  --line: #d6e3e6;
+  --accent: #0f7c86;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcf0f1;
+  --late: #c0392b;
+  --late-soft: #fbe3e0;
+  --soon: #a86100;
+  --soon-soft: #fdf0d9;
+  --ok: #2f7a45;
+  --c-shop: #2f7a45;
+  --c-semi: #c2562f;
+  --c-veg: #7b4bb3;
+  --c-meat: #a8323e;
+  --display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a1c; --card: #172528; --fg: #e4eff1; --muted: #93a9ae; --line: #284045;
+    --accent: #4cc1ca; --accent-ink: #062427; --accent-soft: #163a3e;
+    --late: #ff8a7d; --late-soft: #3d1d1a; --soon: #f2b55a; --soon-soft: #3a2a10; --ok: #7bd294;
+    --c-shop: #7bd294; --c-semi: #ff9f7a; --c-veg: #c4a1f0; --c-meat: #ff8f9b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a1c; --card: #172528; --fg: #e4eff1; --muted: #93a9ae; --line: #284045;
+  --accent: #4cc1ca; --accent-ink: #062427; --accent-soft: #163a3e;
+  --late: #ff8a7d; --late-soft: #3d1d1a; --soon: #f2b55a; --soon-soft: #3a2a10; --ok: #7bd294;
+  --c-shop: #7bd294; --c-semi: #ff9f7a; --c-veg: #c4a1f0; --c-meat: #ff8f9b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 17px; line-height: 1.4;
+}
+.wrap {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 120px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+header { display: flex; flex-direction: column; gap: 4px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0; }
+h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.notice { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; color: var(--muted); }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; align-items: center;
+}
+.item.late { border-color: var(--late); }
+.item.soon { border-color: var(--soon); }
+.info { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.name { font-weight: 600; font-size: 18px; overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 15px; color: var(--muted); }
+.qty { font-weight: 600; color: var(--fg); font-variant-numeric: tabular-nums; }
+.cat { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.cat[data-c="shop"] { color: var(--c-shop); }
+.cat[data-c="semi"] { color: var(--c-semi); }
+.cat[data-c="veg"] { color: var(--c-veg); }
+.cat[data-c="meat"] { color: var(--c-meat); }
+.when { font-size: 15px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); width: fit-content; }
+.late .when { background: var(--late-soft); color: var(--late); }
+.soon .when { background: var(--soon-soft); color: var(--soon); }
+.used {
+  border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600;
+  border-radius: 12px; padding: 12px 14px; min-height: 48px; white-space: nowrap;
+}
+.row2 { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 15px; }
+.link { background: none; border: 0; padding: 4px 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+a.link { display: inline-block; }
+.link.danger { color: var(--late); }
+a.btn { display: flex; align-items: center; justify-content: center; text-decoration: none; text-align: center; }
+
+.fab-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  display: flex; justify-content: center;
+}
+.fab { width: 100%; max-width: 528px; border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 19px; min-height: 58px; }
+
+/* форма добавления */
+.sheet { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 16px; display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label, .lbl { font-weight: 600; }
+.hint { font-size: 14px; color: var(--muted); }
+input[type="text"], input[type="date"], select {
+  width: 100%; min-height: 50px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg);
+}
+.cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cats button {
+  border: 2px solid var(--line); background: var(--bg); border-radius: 12px; padding: 10px; text-align: left; min-height: 56px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.cats button small { color: var(--muted); font-size: 13px; }
+.cats button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.qtyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.step { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.step button { border: 0; background: var(--bg); width: 50px; height: 50px; font-size: 24px; }
+.step output { min-width: 44px; text-align: center; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+.qtyrow select { width: auto; flex: 1; min-width: 120px; }
+.actions { display: flex; gap: 10px; }
+.actions .used { flex: 1; }
+.ghost { border: 1px solid var(--line); background: transparent; border-radius: 12px; padding: 12px 16px; min-height: 48px; }
+.err { color: var(--late); font-size: 15px; }
+
+.cal { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.cal p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom, 0px)); z-index: 6;
+  background: var(--fg); color: var(--bg); border-radius: 12px; padding: 12px 16px; display: flex; gap: 14px; align-items: center;
+  max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,.2);
+}
+.toast button { background: none; border: 0; color: var(--bg); font-weight: 700; text-decoration: underline; }
+@media (prefers-reduced-motion: no-preference) { .item { transition: border-color .2s; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Холодильник</h1>
+    <p class="sub" id="today"></p>
+  </header>
+
+  <div id="status" class="notice">Загружаю список…</div>
+
+  <section id="addSection" hidden>
+    <form class="sheet" id="addForm" autocomplete="off">
+      <div class="field">
+        <label for="fName">Что положили</label>
+        <input type="text" id="fName" placeholder="Например: 3 пачки пельменей" enterkeyhint="done">
+        <span class="hint">Можно сказать голосом: нажмите микрофон на клавиатуре телефона. Если в начале сказать число, оно станет количеством.</span>
+      </div>
+      <div class="field">
+        <span class="lbl">Куда относится</span>
+        <div class="cats" id="fCats">
+          <button type="button" data-c="shop" aria-pressed="true">Из магазина<small>срок с упаковки</small></button>
+          <button type="button" data-c="semi" aria-pressed="false">Мои заготовки<small>заморожено, 2 месяца</small></button>
+          <button type="button" data-c="veg" aria-pressed="false">Ягоды и овощи<small>заморожено, долго</small></button>
+          <button type="button" data-c="meat" aria-pressed="false">Мясо из магазина<small>заморожено, долго</small></button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl">Сколько</span>
+        <div class="qtyrow">
+          <div class="step">
+            <button type="button" id="qMinus" aria-label="Меньше">−</button>
+            <output id="qVal">1</output>
+            <button type="button" id="qPlus" aria-label="Больше">+</button>
+          </div>
+          <select id="fUnit" aria-label="Единица">
+            <option>шт.</option><option>пачки</option><option>пакеты</option><option>порции</option><option>банки</option><option>кг</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fDate" id="fDateLbl">Годен до</label>
+        <input type="date" id="fDate">
+        <span class="hint" id="fDateHint"></span>
+      </div>
+      <p class="err" id="fErr" hidden></p>
+      <div class="actions">
+        <button type="button" class="ghost" id="fCancel">Отмена</button>
+        <button type="submit" class="used" id="fSave">Добавить</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="soonSection" hidden>
+    <h2>Пора съесть</h2>
+    <div class="list" id="soonList"></div>
+  </section>
+
+  <section id="allSection" hidden>
+    <h2>Всё, что есть</h2>
+    <div class="list" id="allList"></div>
+  </section>
+
+  <section class="cal" id="calSection">
+    <h2 style="margin:0">Календарь</h2>
+    <a class="used btn" id="listLink" target="_blank" rel="noopener">Список в календарь</a>
+    <p id="listHint">Запишет весь список продуктов в событие на ближайшую субботу. В открывшемся окне выберите календарь «Холодильник» и нажмите «Сохранить». В телефоне откройте это событие, и увидите, что есть дома.</p>
+    <p>Один раз добавьте в Google Календарь субботнее напоминание: каждую субботу в 9:00 оно позовёт открыть этот список перед составлением меню.</p>
+    <a class="link" id="satLink" target="_blank" rel="noopener">Добавить субботнее напоминание</a>
+    <p>У каждого продукта есть кнопка «Напомнить в календаре»: она создаёт напоминание за 2 дня до конца срока. В открывшемся окне выберите календарь «Холодильник» и нажмите «Сохранить».</p>
+  </section>
+</div>
+
+<div class="fab-bar" id="fabBar" hidden><button class="fab" id="fab" type="button">+ Положила продукт</button></div>
+<div class="toast" id="toast" hidden><span id="toastText"></span><button type="button" id="toastUndo">Вернуть</button></div>
+
+<script>
+const CATS = {
+  shop: { name: "Из магазина", label: "Годен до", hint: "Дата с упаковки." },
+  semi: { name: "Мои заготовки", label: "Дата заморозки", hint: "Срок посчитается сам: 2 месяца от этой даты.", months: 2 },
+  veg:  { name: "Ягоды и овощи", label: "Годен до", hint: "Обычно хранятся год. Можно поправить.", months: 12 },
+  meat: { name: "Мясо из магазина", label: "Годен до", hint: "Обычно хранится полгода. Можно поправить дату с упаковки.", months: 6 }
+};
+const MONTHS = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const WEEKDAYS = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
+const $ = id => document.getElementById(id);
+
+function iso(d) { return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function parseIso(s) { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); }
+function today() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function addMonths(d, n) { const r = new Date(d); r.setMonth(r.getMonth()+n); return r; }
+function human(d) { return d.getDate() + " " + MONTHS[d.getMonth()] + (d.getFullYear() !== today().getFullYear() ? " " + d.getFullYear() : ""); }
+function daysLeft(s) { return Math.round((parseIso(s) - today()) / 86400000); }
+function plural(n, a, b, c) { const m10 = n % 10, m100 = n % 100; return (m10 === 1 && m100 !== 11) ? a : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) ? b : c; }
+function whenText(s) {
+  const n = daysLeft(s);
+  if (n < 0) return "срок прошёл " + human(parseIso(s));
+  if (n === 0) return "срок сегодня";
+  if (n === 1) return "срок завтра";
+  if (n <= 60) return "ещё " + n + " " + plural(n, "день", "дня", "дней") + ", до " + human(parseIso(s));
+  return "до " + human(parseIso(s));
+}
+function gcalDate(d) { return iso(d).replaceAll("-", ""); }
+
+// Google Календарь: событие «пора съесть» на весь день, за 2 дня до конца срока
+function remindLink(p) {
+  let d = addDays(parseIso(p.expires), -2);
+  if (d < today()) d = today();
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "Холодильник: съесть " + p.name,
+    dates: gcalDate(d) + "/" + gcalDate(addDays(d, 1)),
+    details: "Осталось: " + p.qty + " " + p.unit + ". Срок до " + human(parseIso(p.expires)) + "."
+  });
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
+function saturdayLink() {
+  let d = today();
+  while (d.getDay() !== 6) d = addDays(d, 1);
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "Холодильник: что есть дома",
+    dates: gcalDate(d) + "T090000/" + gcalDate(d) + "T093000",
+    recur: "RRULE:FREQ=WEEKLY;BYDAY=SA",
+    details: "Перед меню на неделю откройте список продуктов: " + location.href.split("#")[0]
+  });
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
+
+const t = today();
+$("today").textContent = "Сегодня " + WEEKDAYS[t.getDay()] + ", " + human(t);
+$("satLink").href = saturdayLink();
+
+// Весь список в описании события на ближайшую субботу, чтобы его было видно в телефоне
+function listLink(sorted) {
+  let d = today();
+  while (d.getDay() !== 6) d = addDays(d, 1);
+  const line = p => "• " + p.name + " — " + p.qty + " " + p.unit + " (" + whenText(p.expires) + ")";
+  const soon = sorted.filter(p => daysLeft(p.expires) <= 7);
+  const parts = [];
+  if (soon.length) parts.push("ПОРА СЪЕСТЬ:\n" + soon.map(line).join("\n"));
+  for (const c of Object.keys(CATS)) {
+    const g = sorted.filter(p => p.cat === c && daysLeft(p.expires) > 7);
+    if (g.length) parts.push(CATS[c].name.toUpperCase() + ":\n" + g.map(line).join("\n"));
+  }
+  if (!parts.length) parts.push("Список пуст.");
+  parts.push("Список на " + human(today()) + ".");
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "Холодильник: что есть дома на " + human(d),
+    dates: gcalDate(d) + "T083000/" + gcalDate(d) + "T090000",
+    details: parts.join("\n\n")
+  });
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
+$("listLink").href = listLink([]);
+
+let db = null, items = [], undo = null, toastTimer = null;
+
+function showToast(text, undoFn) {
+  $("toastText").textContent = text;
+  undo = undoFn;
+  $("toastUndo").hidden = !undoFn;
+  $("toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").hidden = true; undo = null; }, 6000);
+}
+$("toastUndo").addEventListener("click", async () => {
+  const fn = undo; undo = null; $("toast").hidden = true;
+  if (fn) await fn();
+});
+
+function itemEl(p) {
+  const n = daysLeft(p.expires);
+  const el = document.createElement("article");
+  el.className = "item" + (n < 0 ? " late" : n <= 7 ? " soon" : "");
+  const info = document.createElement("div"); info.className = "info";
+  const name = document.createElement("div"); name.className = "name"; name.textContent = p.name;
+  const meta = document.createElement("div"); meta.className = "meta";
+  const qty = document.createElement("span"); qty.className = "qty"; qty.textContent = p.qty + " " + p.unit;
+  const cat = document.createElement("span"); cat.className = "cat"; cat.dataset.c = p.cat;
+  cat.innerHTML = '<span class="dot"></span>'; cat.append(CATS[p.cat]?.name || "");
+  meta.append(qty, cat);
+  const when = document.createElement("span"); when.className = "when"; when.textContent = whenText(p.expires);
+  info.append(name, meta, when);
+  const used = document.createElement("button"); used.type = "button"; used.className = "used";
+  used.textContent = "Использовано";
+  used.setAttribute("aria-label", "Использовано: " + p.name + ", минус одна");
+  used.addEventListener("click", () => useOne(p));
+  const row2 = document.createElement("div"); row2.className = "row2";
+  const cal = document.createElement("a"); cal.className = "link"; cal.target = "_blank"; cal.rel = "noopener";
+  cal.href = remindLink(p); cal.textContent = "Напомнить в календаре";
+  const all = document.createElement("button"); all.type = "button"; all.className = "link danger";
+  all.textContent = p.qty > 1 ? "Убрать всё" : "Убрать"; all.addEventListener("click", () => removeAll(p));
+  row2.append(cal, all);
+  el.append(info, used, row2);
+  return el;
+}
+
+function render() {
+  const sorted = [...items].sort((a, b) => a.expires.localeCompare(b.expires));
+  $("listLink").href = listLink(sorted);
+  const soon = sorted.filter(p => daysLeft(p.expires) <= 7);
+  $("soonSection").hidden = soon.length === 0;
+  $("allSection").hidden = sorted.length === 0;
+  $("soonList").replaceChildren(...soon.map(itemEl));
+  const rest = sorted.filter(p => daysLeft(p.expires) > 7);
+  const groups = [];
+  for (const c of Object.keys(CATS)) {
+    const g = rest.filter(p => p.cat === c);
+    if (g.length) {
+      const h = document.createElement("h2"); h.textContent = CATS[c].name; h.style.margin = "8px 0 0";
+      groups.push(h, ...g.map(itemEl));
+    }
+  }
+  if (!rest.length && sorted.length) {
+    const p = document.createElement("p"); p.className = "sub"; p.textContent = "Всё остальное уже выше, в «Пора съесть».";
+    groups.push(p);
+  }
+  $("allList").replaceChildren(...groups);
+  if (db) {
+    $("status").hidden = sorted.length > 0;
+    $("status").textContent = "Список пока пуст. Нажмите «Положила продукт» внизу и добавьте первый продукт.";
+  }
+}
+
+async function useOne(p) {
+  const ref = db.collection("products").doc(p.id);
+  const before = { ...p }; delete before.id;
+  try {
+    if (p.qty > 1) {
+      await ref.update({ qty: p.qty - 1 });
+      showToast(p.name + ": осталось " + (p.qty - 1) + " " + p.unit, () => ref.update({ qty: before.qty }));
+    } else {
+      await ref.delete();
+      showToast(p.name + " закончился", () => ref.set(before));
+    }
+  } catch (e) { showToast("Не сохранилось. Проверьте интернет и нажмите ещё раз.", null); }
+}
+async function removeAll(p) {
+  const ref = db.collection("products").doc(p.id);
+  const before = { ...p }; delete before.id;
+  try { await ref.delete(); showToast(p.name + " убран из списка", () => ref.set(before)); }
+  catch (e) { showToast("Не сохранилось. Проверьте интернет и нажмите ещё раз.", null); }
+}
+
+// форма
+let fCat = "shop", fQty = 1, dateTouched = false;
+function setCat(c) {
+  fCat = c;
+  for (const b of $("fCats").children) b.setAttribute("aria-pressed", String(b.dataset.c === c));
+  $("fDateLbl").textContent = CATS[c].label;
+  $("fDateHint").textContent = CATS[c].hint;
+  if (c === "semi") { $("fDate").value = iso(today()); }
+  else if (CATS[c].months) { $("fDate").value = iso(addMonths(today(), CATS[c].months)); }
+  else if (!dateTouched) { $("fDate").value = ""; }
+}
+function setQty(n) { fQty = Math.max(1, Math.min(99, n)); $("qVal").textContent = fQty; }
+$("fCats").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setCat(b.dataset.c); });
+$("qMinus").addEventListener("click", () => setQty(fQty - 1));
+$("qPlus").addEventListener("click", () => setQty(fQty + 1));
+$("fDate").addEventListener("input", () => { dateTouched = true; });
+
+const NUMWORDS = { "одна":1,"один":1,"одну":1,"две":2,"два":2,"три":3,"четыре":4,"пять":5,"шесть":6,"семь":7,"восемь":8,"девять":9,"десять":10 };
+const UNITS = [["пач","пачки"],["пак","пакеты"],["порц","порции"],["бан","банки"],["шт","шт."],["кг","кг"],["кило","кг"]];
+// «3 пачки пельменей» → количество 3, пачки, «пельмени»(как сказано)
+function parseName(raw) {
+  let words = raw.trim().replace(/\s+/g, " ").split(" ");
+  let qty = null, unit = null;
+  const w0 = (words[0] || "").toLowerCase();
+  if (/^\d+$/.test(w0)) qty = Number(w0); else if (NUMWORDS[w0]) qty = NUMWORDS[w0];
+  if (qty) {
+    words = words.slice(1);
+    const w1 = (words[0] || "").toLowerCase();
+    const u = UNITS.find(([pre]) => w1.startsWith(pre));
+    if (u) { unit = u[1]; words = words.slice(1); }
+  }
+  let name = words.join(" ");
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+  return { name, qty, unit };
+}
+$("fName").addEventListener("change", () => {
+  const r = parseName($("fName").value);
+  if (r.qty) { setQty(r.qty); $("fName").value = r.name; }
+  if (r.unit) $("fUnit").value = r.unit;
+});
+
+function openForm() {
+  $("addForm").reset(); dateTouched = false; setQty(1); setCat("shop"); $("fErr").hidden = true;
+  $("addSection").hidden = false; $("fabBar").hidden = true;
+  $("addSection").scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => $("fName").focus(), 250);
+}
+function closeForm() { $("addSection").hidden = true; $("fabBar").hidden = !db; }
+$("fab").addEventListener("click", openForm);
+$("fCancel").addEventListener("click", closeForm);
+$("addForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const r = parseName($("fName").value);
+  const err = msg => { $("fErr").textContent = msg; $("fErr").hidden = false; };
+  if (!r.name) return err("Напишите, что положили.");
+  if (r.qty) setQty(r.qty);
+  if (r.unit) $("fUnit").value = r.unit;
+  const dv = $("fDate").value;
+  if (!dv) return err(fCat === "semi" ? "Укажите дату заморозки." : "Укажите, до какого числа годен продукт.");
+  const expires = fCat === "semi" ? iso(addMonths(parseIso(dv), 2)) : dv;
+  const doc = { name: r.name, cat: fCat, qty: fQty, unit: $("fUnit").value, expires, added: iso(today()) };
+  if (fCat === "semi") doc.frozen = dv;
+  $("fSave").disabled = true;
+  try {
+    await db.collection("products").add(doc);
+    closeForm();
+    showToast("Добавлено: " + doc.name + ", " + doc.qty + " " + doc.unit, null);
+  } catch (e2) { err("Не сохранилось. Проверьте интернет и попробуйте ещё раз."); }
+  finally { $("fSave").disabled = false; }
+});
+
+// Список хранится в этом браузере (localStorage), у каждого устройства свой
+const KEY = "holodilnik-products";
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+function save(all) { localStorage.setItem(KEY, JSON.stringify(all)); }
+let listeners = [];
+function emit() {
+  const all = load();
+  const snap = { docs: Object.keys(all).map(id => ({ id, data: () => all[id] })) };
+  listeners.forEach(fn => fn(snap));
+}
+function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function docRef(id) {
+  return {
+    async set(data) { const all = load(); all[id] = data; save(all); emit(); },
+    async update(data) { const all = load(); if (!all[id]) throw new Error("нет"); all[id] = { ...all[id], ...data }; save(all); emit(); },
+    async delete() { const all = load(); delete all[id]; save(all); emit(); }
+  };
+}
+const localDb = { collection: () => ({
+  doc: id => docRef(id),
+  async add(data) { const id = newId(); await docRef(id).set(data); return { id }; },
+  onSnapshot(fn) { listeners.push(fn); emit(); return () => {}; }
+}) };
+window.addEventListener("storage", e => { if (e.key === KEY) emit(); });
+
+try { localStorage.setItem("holodilnik-test", "1"); localStorage.removeItem("holodilnik-test"); db = localDb; } catch (e) { db = null; }
+if (!db) {
+  $("status").textContent = "Этот браузер не даёт сохранять список. Откройте страничку в Chrome без режима «Инкогнито».";
+} else {
+  $("fabBar").hidden = false;
+  db.collection("products").onSnapshot(snap => {
+    items = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.name && p.expires);
+    render();
+  });
+}
+</script>
+</body>
+</html>
